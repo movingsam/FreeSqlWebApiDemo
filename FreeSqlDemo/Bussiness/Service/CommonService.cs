@@ -97,11 +97,13 @@ namespace FreeSqlDemo.Bussiness.Service
         /// <returns></returns>
         public async Task<User> GetUserByIdAsync(int id)
         {
-            //这里可以看下Leftjoin的两种用法
+
             var user = await _userRep.Select
-                .LeftJoin<UserRole>((ue, ur) => ue.Id == ur.UserId)//这里直接使用泛型
-                .LeftJoin(ue => ue.Terant.Id == ue.TerantId)//这里利用导航属性
-                .LeftJoin(x => x.UserInfo_Id == x.UserInfo.Id)
+                .Where(x => x.TerantId > 0 && x.UserInfo_Id > 0)//这种是延迟加载的触发
+                ////下面是Leftjoin的两种用法
+                //.LeftJoin<UserRole>((ue, ur) => ue.Id == ur.UserId)//这里直接使用泛型
+                //.LeftJoin(ue => ue.Terant.Id == ue.TerantId)//这里利用导航属性
+                //.LeftJoin(x => x.UserInfo_Id == x.UserInfo.Id)
                 .Where(x => x.Id == id)
                 .ToOneAsync();
             var roleids = user.UserRoles.Select(ur => ur.RoleId);
@@ -172,27 +174,24 @@ namespace FreeSqlDemo.Bussiness.Service
         {
             long total = 0;
             var userList = await _userRep.Select
-                .LeftJoin(ue => ue.Terant.Id == ue.TerantId)//这里利用导航属性
-                .LeftJoin(x => x.UserInfo_Id == x.UserInfo.Id)
-                .LeftJoin(ue =>
-                    ue.UserRoles.AsSelect().Any(ur => ur.UserId == ue.Id))//多对一需要使用AsSelect().Any(x=>x.xxxid==entity.id)
                 .WhereIf(!string.IsNullOrWhiteSpace(param.KeyWord),
-                    x => param.KeyWord.Contains(x.RealName)) //WhereIf(表外变量条件bool值,表内变量条件)
+                    x => param.KeyWord.Contains(x.RealName))
                 .WhereIf(param.RoleIds?.Any() ?? false, x => x.UserRoles.Any(r => param.RoleIds.Contains(r.RoleId)))
+                .Where(x => x.Terant.Id > 0 && x.UserInfo.Id > 0)//触发两个一对一表的延时加载
                 .Count(out total)
                 .OrderBy(param.OrderBy)
                 .Page(param.PageIndex + 1, param.PageSize)
-                .ToListAsync();
-            var roleids = userList.SelectMany(u => u.UserRoles).Select(ur => ur.RoleId).Distinct().ToArray();
-            var roles = await _roleRep.Select
-                .LeftJoin<UserRole>((r, ur) => r.Id == ur.RoleId)
-                .WhereIf(roleids.Any(), r => roleids.Contains(r.Id))
-                .ToListAsync();
-            foreach (var user in userList)
+                .ToListAsync(true);
+            if (userList.Any())
             {
-                foreach (var ur in user.UserRoles)
+                var userIds = userList.Select(a => a.Id).ToArray();
+                var userRoleRep = _userRep.Orm.GetRepository<UserRole, int>();
+                var userRoles = await userRoleRep.Select
+                    .Where(ur => userIds.Contains(ur.UserId) && ur.Role.Id > 0)
+                    .ToListAsync(true);
+                foreach (var user in userList)
                 {
-                    ur.Role = roles.Find(x => x.Id == ur.RoleId);
+                    user.UserRoles = userRoles.Where(a => a.UserId == user.Id).ToList();
                 }
             }
             return new PageListBase<UserVO>(Mapper.Map<List<UserVO>>(userList), total, param.PageIndex + 1, param.PageSize); ;
@@ -231,26 +230,25 @@ namespace FreeSqlDemo.Bussiness.Service
         {
             long total = 0;
             var list = await _roleRep.Select
-                  .LeftJoin<UserRole>((r, ur) => ur.RoleId == r.Id)
-                  .WhereIf(!string.IsNullOrWhiteSpace(param.KeyWord), r => param.KeyWord.Contains(r.FullName))
+                  .WhereIf(!string.IsNullOrWhiteSpace(param.KeyWord), r => r.FullName.Contains(param.KeyWord))
                   .Count(out total)
                   .OrderBy(param.OrderBy)
                   .Page(param.PageIndex + 1, param.PageSize)
-                  .ToListAsync();
-            var userIds = list.SelectMany(r => r.UserRoles).Select(ur => ur.UserId).ToArray();
-
-            var users = await _userRep.Select
-                .LeftJoin<UserRole>((u, ur) => u.Id == ur.UserId)
-                .LeftJoin<UserInfo>((u, ui) => u.UserInfo_Id == ui.Id)
-                .WhereIf(userIds.Any(), u => u.UserRoles.AsSelect().Any(ur => userIds.Contains(ur.UserId)))
-                .ToListAsync();
-            foreach (var role in list)
+                  .ToListAsync(true);
+            //分两步查询出对应的用户
+            if (list.Any())
             {
-                role.UserRoles.ToList().ForEach(
-                    ur => ur.User = users.Find(u => u.Id == ur.UserId)
-                );
+                var rids = list.Select(x => x.Id);
+                var userRoleRep = _userRep.Orm.GetRepository<UserRole, int>();//通过中间表加载出用户
+                var userRoles = await userRoleRep.Select
+                    .Where(ur => ur.User.Id > 0)//触发用户表关联
+                    .Where<Role>(r => rids.Contains(r.Id))
+                    .ToListAsync(true);
+                foreach (var role in list)
+                {
+                    role.UserRoles = userRoles.Where(ur => ur.RoleId == role.Id).ToList();
+                }
             }
-
             return new PageListBase<RoleVO>(Mapper.Map<List<RoleVO>>(list), total, param.PageIndex + 1, param.PageSize);
 
         }

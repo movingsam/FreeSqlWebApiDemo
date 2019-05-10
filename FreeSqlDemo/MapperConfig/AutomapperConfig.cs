@@ -20,18 +20,16 @@ namespace FreeSqlDemo.MapperConfig
             CreateMap<User, CurrentUser>()
                 .ForMember(cu => cu.PhoneNumber, opt => opt.MapFrom(ue => ue.UserInfo.PhoneNumber))
                 .ForMember(cu => cu.Roles, opt => opt.MapFrom(ue => from ur in ue.UserRoles select ur.Role));
-            //.ForMember(cu => cu.Terant, opt => opt.MapFrom(ue => ue.Terant));
-            CreateMap<UserInput, User>()
+            CreateMap<UserInput, User>()//automapper只支持第一层属性映射 所以需要使用AfterMap来做次层级的映射
                 .AfterMap((ui, u) =>
                 {
-                    u.UserInfo = new UserInfo();
-                    u.UserInfo.Address = ui.Address;
-                    u.UserInfo.Email = ui.Email;
-                    u.UserInfo.PhoneNumber = ui.PhoneNumber;
+                    u.UserInfo = new UserInfo()
+                    {
+                        Address = ui.Address,
+                        Email = ui.Email,
+                        PhoneNumber = ui.PhoneNumber
+                    };
                 });
-
-            //CreateMap<User,UserInput>()
-            //    .ForMember(u=>u.Email,opt=>opt.MapFrom(ui=>ui.UserInfo))
             CreateMap<Terant, TerantInput>();
             CreateMap<TerantInput, Terant>();
 
@@ -47,7 +45,7 @@ namespace FreeSqlDemo.MapperConfig
                 .ForMember(x => x.Email, opt => opt.MapFrom(u => u.UserInfo.Email))
                 .ForMember(x => x.Address, opt => opt.MapFrom(u => u.UserInfo.Address))
                 .ForMember(x => x.PhoneNumber, opt => opt.MapFrom(u => u.UserInfo.PhoneNumber))
-                .ForMember(x=>x.Roles,opt=>opt.MapFrom(u=> from ur in u.UserRoles select  ur.Role));
+                .ForMember(x => x.Roles, opt => opt.MapFrom(u => from ur in u.UserRoles select ur.Role));
         }
     }
 }
