@@ -31,9 +31,15 @@ namespace FreeSqlDemo
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            #region 配置项注入
+
             services.AddOptions();
             services.Configure<JwtOptions>(Configuration.GetSection("JwtOptions"));
             services.Configure<FreeSqlConfig>(Configuration.GetSection("FreeSqlConfig"));
+
+            #endregion
+            #region JWT
+
             var jwt = services.BuildServiceProvider().GetRequiredService<IOptions<JwtOptions>>().Value;
             services
                 .AddAuthentication(options =>
@@ -57,9 +63,10 @@ namespace FreeSqlDemo
                     };
                 });
 
-
+            #endregion
             services.AddFreeSql();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            #region Swagger
             services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new Info
@@ -86,8 +93,11 @@ namespace FreeSqlDemo
                 {
                     options.IncludeXmlComments(item, true);
                 }
-                //options.OperationFilter<HttpHeaderOperation>();
             });
+
+
+            #endregion
+
 
         }
 
@@ -113,6 +123,10 @@ namespace FreeSqlDemo
                 c.SwaggerEndpoint("/v1/swagger.json", "FreeSql Demo");
             });
         }
+
+        /// <summary>
+        /// 备注XML 全加载
+        /// </summary>
         public class FindAllXmlFile
         {
             public static string[] GetFile(string path, string searchPattern)

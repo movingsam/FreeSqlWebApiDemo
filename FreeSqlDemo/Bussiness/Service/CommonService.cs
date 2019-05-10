@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FreeSql;
 using FreeSqlDemo.Bussiness.DTO.Login;
+using FreeSqlDemo.Bussiness.DTO.Role;
 using FreeSqlDemo.Bussiness.DTO.Terant;
 using FreeSqlDemo.Bussiness.DTO.User;
 using FreeSqlDemo.Bussiness.Entities;
@@ -14,6 +15,7 @@ using FreeSqlDemo.Domain.Entities;
 using FreeSqlDemo.Domain.Repository;
 using FreeSqlDemo.Infrastructure.DomainBase;
 using FreeSqlDemo.Infrastructure.Entity;
+using FreeSqlDemo.Infrastructure.Entity.Page;
 using FreeSqlDemo.Infrastructure.JWTOptions;
 using FreeSqlDemo.Infrastructure.RepositoryBase;
 using Microsoft.AspNetCore.Http;
@@ -40,11 +42,15 @@ namespace FreeSqlDemo.Bussiness.Service
             _jwtOptions = service.GetRequiredService<IOptions<JwtOptions>>().Value;
             _terantRep = UnitOfWork.GetRepository<Terant>();
             var codeFirst = service.GetService<IFreeSql>().CodeFirst;
+
+            #region 使用Sqllit可能会锁表所以索性手动迁移一下防止锁表 其他数据库应该不会出现这个问题
             codeFirst.SyncStructure<User>();
             codeFirst.SyncStructure<Role>();
             codeFirst.SyncStructure<UserRole>();
             codeFirst.SyncStructure<Terant>();
             codeFirst.SyncStructure<UserInfo>();
+            #endregion
+
         }
         /// <summary>
         /// 登录
@@ -73,7 +79,19 @@ namespace FreeSqlDemo.Bussiness.Service
             return res;
         }
         /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> LogOut()
+        {
+            await _cache.RemoveAsync($"{CacheKey.Login}:{CurrentUser.Id}");
+            return true;
+
+        }
+        /// <summary>
         /// 获取用户 通过Id
+        /// ##FreeSql LeftJoin演示
+        /// ##多对多分步查询
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -104,6 +122,10 @@ namespace FreeSqlDemo.Bussiness.Service
                 ?? throw new Exception("租户Id不存在");
             //Automapper转一手
             var user = Mapper.Map<User>(input);
+            //我这里已经在Automapper将数据转换过来了所以直接添加了
+            await UnitOfWork.GetRepository<UserInfo>().InsertAsync(user.UserInfo);
+            //这里把关联Id写上 因为FreeSql添加到Sql中时会自动将主键补齐所以直接用就行了
+            user.UserInfo_Id = user.UserInfo.Id;
             user.UserRoles = new List<UserRole>();
             var userSave = await _userRep.InsertAsync(user);
             if (input.UserRoles?.Count > 0)
@@ -120,8 +142,7 @@ namespace FreeSqlDemo.Bussiness.Service
             }
             //打上租户Id
             user.UserInfo.TerantId = user.TerantId;
-            //我这里已经在Automapper将数据转换过来了所以直接添加了
-            await UnitOfWork.GetRepository<UserInfo>().InsertAsync(user.UserInfo);
+
             try
             {
                 //这里利用Uow做事务性提交 一次性提交所有数据
@@ -136,6 +157,48 @@ namespace FreeSqlDemo.Bussiness.Service
             return res;
 
         }
+
+        /// <summary>
+        /// 用户获取
+        /// 这里主演演示内容：
+        /// FreeSql：
+        /// 分页
+        /// WhereIf
+        /// 一对一 多对多查询
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public async Task<PageListBase<UserVO>> GetUserPageAsync(UserPageParam param)
+        {
+            long total = 0;
+            var userList = await _userRep.Select
+                .LeftJoin(ue => ue.Terant.Id == ue.TerantId)//这里利用导航属性
+                .LeftJoin(x => x.UserInfo_Id == x.UserInfo.Id)
+                .LeftJoin(ue =>
+                    ue.UserRoles.AsSelect().Any(ur => ur.UserId == ue.Id))//多对一需要使用AsSelect().Any(x=>x.xxxid==entity.id)
+                .WhereIf(!string.IsNullOrWhiteSpace(param.KeyWord),
+                    x => param.KeyWord.Contains(x.RealName)) //WhereIf(表外变量条件bool值,表内变量条件)
+                .WhereIf(param.RoleIds?.Any() ?? false, x => x.UserRoles.Any(r => param.RoleIds.Contains(r.RoleId)))
+                .Count(out total)
+                .OrderBy(param.OrderBy)
+                .Page(param.PageIndex + 1, param.PageSize)
+                .ToListAsync();
+            var roleids = userList.SelectMany(u => u.UserRoles).Select(ur => ur.RoleId).Distinct().ToArray();
+            var roles = await _roleRep.Select
+                .LeftJoin<UserRole>((r, ur) => r.Id == ur.RoleId)
+                .WhereIf(roleids.Any(), r => roleids.Contains(r.Id))
+                .ToListAsync();
+            foreach (var user in userList)
+            {
+                foreach (var ur in user.UserRoles)
+                {
+                    ur.Role = roles.Find(x => x.Id == ur.RoleId);
+                }
+            }
+            return new PageListBase<UserVO>(Mapper.Map<List<UserVO>>(userList), total, param.PageIndex + 1, param.PageSize); ;
+        }
+
+
 
         /// <summary>
         /// 添加租户
@@ -160,7 +223,83 @@ namespace FreeSqlDemo.Bussiness.Service
             return true;
         }
 
+        /// <summary>
+        /// 角色分页查询
+        /// </summary>
+        /// <returns></returns>
+        public async Task<PageListBase<RoleVO>> GetRolePageAsync(RolePageParam param)
+        {
+            long total = 0;
+            var list = await _roleRep.Select
+                  .LeftJoin<UserRole>((r, ur) => ur.RoleId == r.Id)
+                  .WhereIf(!string.IsNullOrWhiteSpace(param.KeyWord), r => param.KeyWord.Contains(r.FullName))
+                  .Count(out total)
+                  .OrderBy(param.OrderBy)
+                  .Page(param.PageIndex + 1, param.PageSize)
+                  .ToListAsync();
+            var userIds = list.SelectMany(r => r.UserRoles).Select(ur => ur.UserId).ToArray();
+
+            var users = await _userRep.Select
+                .LeftJoin<UserRole>((u, ur) => u.Id == ur.UserId)
+                .LeftJoin<UserInfo>((u, ui) => u.UserInfo_Id == ui.Id)
+                .WhereIf(userIds.Any(), u => u.UserRoles.AsSelect().Any(ur => userIds.Contains(ur.UserId)))
+                .ToListAsync();
+            foreach (var role in list)
+            {
+                role.UserRoles.ToList().ForEach(
+                    ur => ur.User = users.Find(u => u.Id == ur.UserId)
+                );
+            }
+
+            return new PageListBase<RoleVO>(Mapper.Map<List<RoleVO>>(list), total, param.PageIndex + 1, param.PageSize);
+
+        }
+        /// <summary>
+        /// 角色新增
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public async Task<bool> AddRole(RoleInput input)
+        {
+            var role = Mapper.Map<Role>(input);
+            role.TerantId = CurrentUser.Terant.Id;
+            await _roleRep.InsertAsync(role);
+            var users = await _userRep.Select
+                .WhereIf(
+                    input.UserIds?.Any() ?? false,
+                    u => !u.IsDeleted && input.UserIds.Contains(u.Id))
+                  .ToListAsync();
+            role.UserRoles = new List<UserRole>();
+            foreach (var user in users)
+            {
+                role.UserRoles.Add(new UserRole()
+                {
+                    RoleId = role.Id,
+                    UserId = user.Id
+                });
+            }
+            await UnitOfWork.GetRepository<UserRole>().InsertAsync(role.UserRoles);
+            try
+            {
+                UnitOfWork.Commit(); return true;
+            }
+            catch (Exception e)
+            {
+                UnitOfWork.Rollback();
+                Logger.LogError(e.ToString());
+                return false;
+            }
+        }
+
+
+
         #region PrivateFunc
+        /// <summary>
+        /// 这里我就不加密了
+        /// </summary>
+        /// <param name="account"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         private async Task<int> Validate(string account, string password)
         {
             var userId = (await _userRep.Select.Where(x => x.Account == account && x.Password == password).ToOneAsync())?.Id;

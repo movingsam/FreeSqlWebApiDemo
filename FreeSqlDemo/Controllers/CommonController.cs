@@ -5,10 +5,12 @@ using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using FreeSqlDemo.Bussiness.DTO.Login;
+using FreeSqlDemo.Bussiness.DTO.Role;
 using FreeSqlDemo.Bussiness.DTO.Terant;
 using FreeSqlDemo.Bussiness.DTO.User;
 using FreeSqlDemo.Bussiness.Service;
 using FreeSqlDemo.Infrastructure.JWTOptions;
+using FreeSqlDemo.Infrastructure.MVC;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -20,10 +22,10 @@ namespace FreeSqlDemo.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class CommonController : ControllerBase
+    public class CommonController : DemoControllerBase
     {
         private readonly ICommonService _commonService;
-        public CommonController(IServiceProvider service)
+        public CommonController(IServiceProvider service) : base(service)
         {
             _commonService = service.GetRequiredService<ICommonService>();
         }
@@ -44,28 +46,37 @@ namespace FreeSqlDemo.Controllers
             return Ok(await _commonService.AddUser(input));
         }
 
-        // POST api/values
+        // POST api/Common/Login
         [HttpPost("Login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromForm]LoginDto dto)
         {
             var res = await _commonService.Login(dto);
-            var id = new ClaimsIdentity(JwtBearerDefaults.AuthenticationScheme);
-            id.AddClaim(new Claim(ClaimsType.Subject, res.Subject));
-          //  await HttpContext.SignInAsync(JwtBearerDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
             return Ok(res);
         }
-
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
         // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpGet("Logout")]
+        public async Task<IActionResult> Logout()
         {
+            var res = await _commonService.LogOut();
+            return Ok(res);
         }
+        // Get api/Common/User/Page
+        [HttpGet("User/Page")]
+        public async Task<IActionResult> GetUserPage([FromQuery]UserPageParam param)
+        {
+            return Ok(await _commonService.GetUserPageAsync(param));
+        }
+        [HttpPost("Role")]
+        public async Task<IActionResult> AddRole([FromBody]RoleInput input)
+        {
+            return Ok(await _commonService.AddRole(input));
+        }
+        [HttpGet("Role/Page")]
+        public async Task<IActionResult> GetRolePage([FromQuery]RolePageParam param)
+        {
+            return Ok(await _commonService.GetRolePageAsync(param));
+        }
+
     }
 }

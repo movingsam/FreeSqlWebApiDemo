@@ -21,12 +21,14 @@ namespace FreeSqlDemo.Infrastructure.Repository
         private readonly BaseRepository<T> _baseRep;
         public UnitOfWorkRepository(IServiceProvider service)
         {
+            _baseRep = service.GetRequiredService<IFreeSql>().GetRepository<T>();
+            _baseRep.UnitOfWork = service.GetRequiredService<IRepositoryUnitOfWork>();
             var terant = service.GetService<CurrentUser>()?.Terant;
             if (terant != null)
             {
                 _baseRep.DataFilter.Apply($"{nameof(Terant)}", t => t.TerantId == terant.Id);
             }
-            _baseRep = service.GetRequiredService<IRepositoryUnitOfWork>().GetRepository<T>();
+
         }
 
         public void Dispose()

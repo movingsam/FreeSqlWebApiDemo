@@ -15,7 +15,7 @@ namespace FreeSqlDemo.Infrastructure.Entity
         [Column(IsIdentity = true, IsPrimary = true)]
         public TKey Id { get; set; }
         /// <summary>
-        /// 租户ID (演示多租户功能使用)
+        /// 租户ID (演示多租户数据过滤功能)
         /// </summary>
         public int TerantId { get; set; }
         public bool IsDeleted { get; set; }

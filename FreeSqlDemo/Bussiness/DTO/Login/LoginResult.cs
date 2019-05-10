@@ -10,7 +10,6 @@ namespace FreeSqlDemo.Bussiness.DTO.Login
     {
         public string Subject { get; set; }
         public LoginCode Code { get; set; } = LoginCode.NoUser;
-        //public ICollection<Claim> Claims { get; set; } = new List<Claim>();
         public string AccessToken { get; set; }
     }
 
