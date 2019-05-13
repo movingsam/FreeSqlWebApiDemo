@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using FreeSqlDemo.Bussiness.DTO.Login;
+﻿using FreeSqlDemo.Bussiness.DTO.Login;
 using FreeSqlDemo.Bussiness.DTO.Role;
 using FreeSqlDemo.Bussiness.DTO.Terant;
 using FreeSqlDemo.Bussiness.DTO.User;
 using FreeSqlDemo.Bussiness.Service;
-using FreeSqlDemo.Infrastructure.JWTOptions;
 using FreeSqlDemo.Infrastructure.MVC;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace FreeSqlDemo.Controllers
 {
@@ -67,6 +61,20 @@ namespace FreeSqlDemo.Controllers
         {
             return Ok(await _commonService.GetUserPageAsync(param));
         }
+
+
+        [HttpPut("User/Id/{id}")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UserUpdateInput input)
+        {
+            return Ok(await _commonService.UpdateUser(id, input));
+        }
+
+        [HttpPut("User/Disable")]
+        public async Task<IActionResult> UserDisable([FromBody]List<int> ids)
+        {
+            return Ok(await _commonService.DisableUser(ids.ToArray()));
+        }
+
         [HttpPost("Role")]
         public async Task<IActionResult> AddRole([FromBody]RoleInput input)
         {
@@ -76,6 +84,17 @@ namespace FreeSqlDemo.Controllers
         public async Task<IActionResult> GetRolePage([FromQuery]RolePageParam param)
         {
             return Ok(await _commonService.GetRolePageAsync(param));
+        }
+        [HttpPut("Role/Id/{id}")]
+        public async Task<IActionResult> UpdateRolePage(int id, [FromBody] RoleUpdateInput input)
+        {
+            return Ok(await _commonService.RoleUpdate(id, input));
+        }
+
+        [HttpPut("Role/Disable")]
+        public async Task<IActionResult> RoleDisable([FromBody]List<int> ids)
+        {
+            return Ok(await _commonService.DisableRole(ids));
         }
 
     }

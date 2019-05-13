@@ -7,7 +7,6 @@ using FreeSqlDemo.Bussiness.DTO.Role;
 using FreeSqlDemo.Bussiness.DTO.Terant;
 using FreeSqlDemo.Bussiness.DTO.User;
 using FreeSqlDemo.Bussiness.Entities;
-using FreeSqlDemo.Domain.Entities;
 using FreeSqlDemo.Infrastructure.DomainBase;
 using FreeSqlDemo.Infrastructure.Entity;
 
@@ -30,12 +29,21 @@ namespace FreeSqlDemo.MapperConfig
                         PhoneNumber = ui.PhoneNumber
                     };
                 });
+            CreateMap<UserUpdateInput, User>();
+
+
+            CreateMap<User, UserUpdateInput>();
+
+
             CreateMap<Terant, TerantInput>();
             CreateMap<TerantInput, Terant>();
 
             CreateMap<Role, CurrentRole>();
 
             CreateMap<RoleInput, Role>();
+            CreateMap<RoleUpdateInput, Role>();
+            CreateMap<Role, RoleUpdateInput>();
+
 
             CreateMap<Role, RoleVO>()
                 .ForMember(ro => ro.User,

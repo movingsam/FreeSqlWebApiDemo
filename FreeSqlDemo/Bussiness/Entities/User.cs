@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using FreeSql.DataAnnotations;
-using FreeSqlDemo.Bussiness.Entities;
 using FreeSqlDemo.Infrastructure.Entity;
-using Microsoft.AspNetCore.Identity;
-using MySqlX.XDevAPI.Relational;
 
-namespace FreeSqlDemo.Domain.Entities
+namespace FreeSqlDemo.Bussiness.Entities
 {
     /// <summary>
     /// 指定表名

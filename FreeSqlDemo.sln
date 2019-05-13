@@ -3,7 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreeSqlDemo", "FreeSqlDemo\FreeSqlDemo.csproj", "{208DB347-6044-4E17-9DB8-87E43548C6D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FreeSqlDemo", "FreeSqlDemo\FreeSqlDemo.csproj", "{208DB347-6044-4E17-9DB8-87E43548C6D4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FreeSql", "C:\Users\samsu\source\repos\FreeSql\FreeSql\FreeSql.csproj", "{6B9501D5-15F7-48D1-900B-805BBF85A531}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FreeSql.DbContext", "C:\Users\samsu\source\repos\FreeSql.DbContext\FreeSql.DbContext\FreeSql.DbContext.csproj", "{A650C0F0-FF28-4D2D-92D1-0641F5BC8AC0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FreeSql.Repository", "C:\Users\samsu\source\repos\FreeSql.DbContext\FreeSql.Repository\FreeSql.Repository.csproj", "{86DA6153-570D-4276-A296-BD9DE0DA940A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +21,18 @@ Global
 		{208DB347-6044-4E17-9DB8-87E43548C6D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{208DB347-6044-4E17-9DB8-87E43548C6D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{208DB347-6044-4E17-9DB8-87E43548C6D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B9501D5-15F7-48D1-900B-805BBF85A531}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B9501D5-15F7-48D1-900B-805BBF85A531}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B9501D5-15F7-48D1-900B-805BBF85A531}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B9501D5-15F7-48D1-900B-805BBF85A531}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A650C0F0-FF28-4D2D-92D1-0641F5BC8AC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A650C0F0-FF28-4D2D-92D1-0641F5BC8AC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A650C0F0-FF28-4D2D-92D1-0641F5BC8AC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A650C0F0-FF28-4D2D-92D1-0641F5BC8AC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86DA6153-570D-4276-A296-BD9DE0DA940A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86DA6153-570D-4276-A296-BD9DE0DA940A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86DA6153-570D-4276-A296-BD9DE0DA940A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86DA6153-570D-4276-A296-BD9DE0DA940A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

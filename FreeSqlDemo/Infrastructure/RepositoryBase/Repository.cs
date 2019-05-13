@@ -4,7 +4,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using FreeSql;
-using FreeSqlDemo.Domain.Entities;
 using FreeSqlDemo.Infrastructure.DomainBase;
 using FreeSqlDemo.Infrastructure.Entity;
 using Microsoft.Extensions.DependencyInjection;

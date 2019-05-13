@@ -1,7 +1,7 @@
 ﻿using FreeSql;
-using FreeSqlDemo.Domain.Entities;
+using FreeSqlDemo.Bussiness.Entities;
 
-namespace FreeSqlDemo.Domain.Repository
+namespace FreeSqlDemo.Bussiness.Repository
 {
     public interface IRoleRepository : IRepository<Role>
     {

@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using FreeSqlDemo.Domain.Entities;
+using FreeSqlDemo.Bussiness.Entities;
 using FreeSqlDemo.Infrastructure.Repository;
 
-namespace FreeSqlDemo.Domain.Repository
+namespace FreeSqlDemo.Bussiness.Repository
 {
     public class RoleRepository : UnitOfWorkRepository<Role, int>, IRoleRepository
     {

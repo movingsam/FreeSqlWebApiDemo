@@ -6,7 +6,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
 using FreeSql;
-using FreeSqlDemo.Domain.Entities;
 using FreeSqlDemo.Infrastructure.DomainBase;
 using FreeSqlDemo.Infrastructure.Entity;
 using FreeSqlDemo.Infrastructure.JWTOptions;
@@ -59,7 +58,8 @@ namespace FreeSqlDemo.Infrastructure.DI
                 return freesql;
             });
             //注入Uow
-            service.AddScoped<IRepositoryUnitOfWork>(f => f.GetRequiredService<IFreeSql>().CreateUnitOfWork());
+            service.AddScoped<IRepositoryUnitOfWork>(f => 
+                f.GetRequiredService<IFreeSql>().CreateUnitOfWork());
             //注入HttpContextAccessor 可以从IOC中拿到HttpContext的内容
             service.AddHttpContextAccessor();
             service.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();

@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using FreeSql.DataAnnotations;
 using FreeSqlDemo.Infrastructure.Entity;
-using MySqlX.XDevAPI.Relational;
 
-namespace FreeSqlDemo.Domain.Entities
+namespace FreeSqlDemo.Bussiness.Entities
 {
     [Table(Name = "Base_Role")]
     public class Role : EntityBase<int>

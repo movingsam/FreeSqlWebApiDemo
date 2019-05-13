@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using FreeSql.DataAnnotations;
+﻿using FreeSql.DataAnnotations;
 
-namespace FreeSqlDemo.Domain.Entities
+namespace FreeSqlDemo.Bussiness.Entities
 {
     /// <summary>
     /// 这里不指定表名 看一下效果
