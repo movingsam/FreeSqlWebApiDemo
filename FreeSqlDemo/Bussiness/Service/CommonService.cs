@@ -210,13 +210,13 @@ namespace FreeSqlDemo.Bussiness.Service
             await _userRep.UpdateAsync(resUser);
             var (needAdd, needRemove) = AddAndRemove(user.UserRoles.Select(ur => ur.RoleId), input.UserRoles);
             var userRoleRep = UnitOfWork.GetRepository<UserRole>();
-            var userRole = needAdd.Select(userId => new UserRole() { RoleId = resUser.Id, UserId = userId }).ToList();
+            var userRole = needAdd.Select(userId => new UserRole { RoleId = resUser.Id, UserId = userId }).ToList();
             if (userRole.Any())
             {
                 await userRoleRep.InsertAsync(userRole);
             }
             userRole.Clear();
-            userRole.AddRange(needRemove?.Select(userId => new UserRole() { RoleId = resUser.Id, UserId = userId }));
+            userRole.AddRange(needRemove?.Select(userId => new UserRole { RoleId = resUser.Id, UserId = userId }));
             if (userRole.Any())
             {
                 await userRoleRep.DeleteAsync(userRole);
@@ -233,15 +233,16 @@ namespace FreeSqlDemo.Bussiness.Service
                 return false;
             }
         }
+      
 
         /// <summary>
-        /// 批量禁用用户
+        /// 禁用/批量禁用用户
         /// </summary>
         /// <param name="ids"></param>
         /// <returns></returns>
         public async Task<bool> DisableUser(int[] ids)
         {
-            var users = ids.Select(id => new User() { Id = id, IsDeleted = true });
+            var users = ids.Select(id => new User { Id = id, IsDeleted = true });
             var res = await _userRep.UpdateDiy.SetSource(users).UpdateColumns(x => x.IsDeleted).ExecuteAffrowsAsync();
             return res > 0;
         }
@@ -338,6 +339,30 @@ namespace FreeSqlDemo.Bussiness.Service
             var res = await _roleRep.UpdateDiy.SetSource(roles).UpdateColumns(x => x.IsDeleted).ExecuteAffrowsAsync();
             return res > 0;
         }
+
+
+        /// <summary>
+        /// 角色删除/批量删除
+        /// </summary>
+        /// <param name="ids"></param>
+        /// <returns></returns>
+        public async Task<bool> DeleteRole(int[] ids)
+        {
+            await _roleRep.DeleteAsync(x => ids.Contains(x.Id));
+            try
+            {
+                UnitOfWork.Commit();
+                return true;
+            }
+            catch (Exception e)
+            {
+                UnitOfWork.Rollback();
+                Logger.LogError(e.ToString());
+                return false;
+            }
+        }
+
+
         /// <summary>
         /// 角色更新
         /// </summary>

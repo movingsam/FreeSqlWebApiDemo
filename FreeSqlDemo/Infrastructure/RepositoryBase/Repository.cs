@@ -48,10 +48,8 @@ namespace FreeSqlDemo.Infrastructure.Repository
             set { }
         }
 
-        public IFreeSql Orm
-        {
-            get => _baseRep.Orm;
-        }
+        public IFreeSql Orm => _baseRep.Orm;
+
         public ISelect<T> Where(Expression<Func<T, bool>> exp)
         {
             return _baseRep.Where(exp);
